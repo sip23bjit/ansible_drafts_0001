@@ -95,4 +95,4 @@ try {
 http://server_host_or_IP/todo_list.php
 ```
 
-(Reference Link)[https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-centos-7#step-4-testing-php-on-your-apache-web-server]
+[Reference Link](https://www.digitalocean.com/community/tutorials/how-to-install-linux-apache-mysql-php-lamp-stack-on-centos-7#step-4-testing-php-on-your-apache-web-server)
