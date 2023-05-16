@@ -1,0 +1,62 @@
+---
+- name: Linux, Apache, MySQL, PHP (LAMP) stack On CentOS 7
+  hosts: ubuntu-clients
+  become: true
+
+  tasks:
+
+    - name: Step 1 — Installing the apache2 Web Server
+      ansible.builtin.apt:
+        name: apache2
+        state: latest
+    - name: Start service apache2, if not started
+      ansible.builtin.service:
+        name: apache2
+        state: started
+#    - name: Enable service apache2, and not touch the state
+#      ansible.builtin.service:
+#        name: apache2
+#        enabled: yes
+    - name: apt cache update
+      apt:
+        update_cache: yes
+    - name: Step 2 — Installing MySQL (MariaDB)
+      ansible.builtin.apt:
+        name: mysql-server
+        state: latest
+    - name: Start service mysql-server, if not started
+      ansible.builtin.service:
+        name: mysql
+        state: started
+#    - name: Enable service mysql-server, and not touch the state
+#      ansible.builtin.service:
+#        name: mysql-server
+#        enabled: yes
+
+    - name: Install PHP
+      ansible.builtin.apt:
+        name:
+          - php
+          - libapache2-mod-php
+        state: latest
+
+    - name: Step 3 — Installing PHP-mysql
+      ansible.builtin.apt:
+        name: php-mysql
+        state: latest
+    - name: Restart service apache2
+      ansible.builtin.service:
+        name: apache2
+        state: restarted
+        
+    - name: Remove file (index.html)
+      ansible.builtin.file:
+        path: /var/www/html/index.html
+        state: absent
+    - name: Copy file with owner and permissions
+      ansible.builtin.copy:
+        src: /home/ansible/files/info.php
+        dest: /var/www/html/info.php
+        owner: root
+        group: root
+        mode: '0644'
