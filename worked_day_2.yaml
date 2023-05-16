@@ -1,0 +1,72 @@
+---
+- name: LAMP stack
+  hosts: all
+  become: true
+  vars:
+    CentOS_packages:
+      - httpd
+      - mariadb-server
+      - php
+      - php-mysql
+    Ubuntu_packages:
+      - apache2
+      - mysql-server
+      - php
+      - libapache2-mod-php
+      - php-mysql
+  tasks:
+    - name: YUM clean
+      shell: yum clean all
+      when: ansible_os_family == "RedHat"
+    
+    - name: Update cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Install packages CentOS
+      yum:
+        name: "{{ item }}"
+        state: present
+        update_cache: yes
+      notify:
+        - Start HTTP
+        - Start MariaDB
+      loop: "{{ CentOS_packages }}"
+      when: ansible_os_family == 'RedHat'
+
+    - name: Install packages Ubuntu
+      apt:
+        name: "{{ item }}"
+        state: present
+      notify:
+        - Start Apache
+        - Start MySQL
+      loop: "{{ Ubuntu_packages }}"
+      when: ansible_os_family == 'Debian'
+
+  handlers:
+    - name: Start HTTP
+      service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Start Apache
+      service:
+        name: apache2
+        state: started
+        enabled: true
+
+    - name: Start MariaDB
+      service:
+        name: mariadb
+        state: started
+        enabled: true
+
+    - name: Start MySQL
+      service:
+        name: mysql
+        state: started
+        enabled: true
