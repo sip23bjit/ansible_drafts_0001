@@ -1,0 +1,149 @@
+---
+- name: Setup LAMP server
+  hosts:
+    - centos
+    - ubuntu
+  become: true
+  tasks:
+    - name: YUM clean
+      shell: yum clean all
+      when: ansible_os_family == "RedHat"
+    
+    - name: Update cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: HTTP install
+      yum:
+        name: httpd
+        state: present
+        update_cache: true
+      notify: Start HTTP
+      when: ansible_os_family == "RedHat"
+
+    - name: Install Apache
+      apt:
+        pkg: apache2
+        state: present
+      notify: Start Apache
+      when: ansible_os_family == "Debian"
+
+    - name: Install Database
+      yum:
+        name:
+          - mariadb-server
+          - mariadb
+        state: present
+        update_cache: true
+      notify: Start MariaDB
+      when: ansible_os_family == "RedHat"
+
+    - name: Install MySQL
+      apt:
+        pkg: mysql-server
+        state: present
+      notify: Start MySQL
+      when: ansible_os_family == "Debian"
+
+    - name: Install basic for PHP
+      yum:
+        name:
+          - epel-release
+          - yum-utils
+          - http://rpms.remirepo.net/enterprise/remi-release-7.rpm
+        state: present
+        update_cache: true
+      when: ansible_os_family == "RedHat"
+
+    - name: Enable remi repo
+      shell: yum-config-manager --enable remi-php71
+      when: ansible_os_family == "RedHat"
+
+    - name: Install PHP
+      yum:
+        name:
+          - php
+          - php-common
+          - php-opcache
+          - php-mcrypt
+          - php-cli
+          - php-gd
+          - php-curl
+          - php-mysqlnd
+        state: present
+        update_cache: true
+      notify: Start HTTP
+      when: ansible_os_family == "RedHat"
+
+    - name: Install PHP
+      apt:
+        pkg:
+          - php
+          - libapache2-mod-php
+          - php-mysql
+        state: present
+      when: ansible_os_family == "Debian"
+
+#    - name: Open Firewall
+#      firewalld:
+#        zone: public
+#        port: http/tcp
+#        permanent: yes
+#        state: enabled
+#      when: ansible_os_family == "RedHat"
+
+    - name: Allow access to http
+      ufw:
+        rule: allow
+        port: http
+        proto: tcp
+      when: ansible_os_family == "Debian"
+
+#    - name: Create directory
+#      file:
+#        path: /var/www/html
+#        state: directory
+#        mode: '0755'
+
+    - name: Copy index file
+      copy:
+        src: /home/ansible/files/index.html
+        dest: /var/www/html/
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Copy PHP info
+      copy:
+        src: /home/ansible/files/info.php
+        dest: /var/www/html/
+        owner: root
+        group: root
+        mode: '0644'
+
+  handlers:
+    - name: Start HTTP
+      service:
+        name: httpd
+        enabled: true
+        state: started
+
+    - name: Start Apache
+      service:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Start MariaDB
+      service:
+        name: mariadb
+        enabled: true
+        state: started
+        
+    - name: Start MySQL
+      service:
+        name: mysql
+        state: started
+        enabled: yes
