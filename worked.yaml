@@ -1,0 +1,22 @@
+---
+- name: Configure LAMP stack
+  hosts: all
+  become: yes
+  vars:
+    - apache_packages:
+        - httpd  # CentOS
+        - apache2  # Ubuntu
+    - mysql_packages:
+        - mysql-server  # CentOS
+        - mysql-server  # Ubuntu
+    - php_packages:
+        - php  # CentOS
+        - php  # Ubuntu
+        - php-mysql  # CentOS
+        - php-mysql  # Ubuntu
+
+  tasks:
+    - name: Update apt cache (Ubuntu)
+      when: ansible_distribution == 'Ubuntu'
+      apt:
+        update_cache: yes
