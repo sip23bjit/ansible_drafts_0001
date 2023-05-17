@@ -1,0 +1,19 @@
+{% if ansible_distribution == 'CentOS' %}
+    {% set log_path = '/var/log/httpd/' %}
+{% elif ansible_distribution == 'Ubuntu' %}
+    {% set log_path = '/var/log/apache2/' %}
+{% endif %}
+
+<VirtualHost {{ server_name }}: {{ PORT}}>
+    ServerName {{ server_name }}
+    DocumentRoot {{ document_root }}
+
+    <Directory {{ document_root }}>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    ErrorLog {{ log_path }}{{ server_name }}_error.log
+    CustomLog {{ log_path }}{{ server_name }}_access.log combined
+</VirtualHost>
