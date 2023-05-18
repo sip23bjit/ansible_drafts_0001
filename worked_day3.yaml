@@ -1,0 +1,82 @@
+---
+- name: LAMP stack NGINX
+  hosts: all
+  become: true
+  vars:
+    CentOS_Packages_list:
+      - nginx
+      - mariadb-server
+      - php
+      - php-mysql
+    Ubuntu_Packages_list:
+      - nginx
+      - mysql-server
+      - php
+      - php-mysql
+    CentOS_Services_list:
+      - nginx
+      - mariadb
+    Ubuntu_Services_list:
+      - nginx
+      - mysql
+
+  tasks:
+    - name: YUM clean
+      shell: yum clean all
+      when: ansible_os_family == "RedHat"
+
+    - name: Update cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+
+    - name: Step 1 — Installing NGINX, MySQL, PHP
+      package:
+        name: "{{ item }}"
+        state: latest
+      loop: "{{ CentOS_Packages_list }}"
+      when: ansible_os_family == "RedHat"
+
+    - name: Step 2 — Starting NGINX, MySQL, PHP
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop: "{{ CentOS_Services_list }}"
+      when: ansible_os_family == "RedHat"
+
+    - name: Step 1 — Installing NGINX, MySQL, PHP
+      package:
+        name: "{{ item }}"
+        state: latest
+        update_cache: yes
+      loop: "{{ Ubuntu_Packages_list }}"
+      when: ansible_os_family == "Debian"
+
+    - name: Step 2 — Starting NGINX, MySQL, PHP
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop: "{{ Ubuntu_Services_list }}"
+      when: ansible_os_family == "Debian"
+
+  handlers:
+    - name: Restart NGINX
+      service:
+        name: nginx
+        state: restarted
+        enabled: true
+
+    - name: Restart MariaDB
+      service:
+        name: mariadb
+        state: restarted
+        enabled: true
+
+    - name: Restart MySQL
+      service:
+        name: mysql
+        state: restarted
+        enabled: true
