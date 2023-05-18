@@ -1,0 +1,114 @@
+---
+    - name: LAMP stack In running one ansible-playbook
+      hosts: all
+      become: true
+      vars:
+
+        server_name: dev.pop.com
+        document_root: /var/www/html
+        apache_conf_path: /etc/apache2/sites-available
+        httpd_conf_path: /etc/httpd/conf
+        PORT: '80'
+        Jinja_temp: /home/ansible/files/virtual_host.j2
+
+        CentOS_packages:
+          - httpd
+          - mariadb-server
+          - php
+          - php-mysql
+        Ubuntu_packages:
+          - apache2
+          - mysql-server
+          - php
+          - libapache2-mod-php
+          - php-mysql
+
+        copy_files:
+          - /home/ansible/files/info.php
+          - /home/ansible/files/index.html
+
+      tasks:
+        - name: YUM clean
+          shell: yum clean all
+          when: ansible_os_family == "RedHat"
+
+        - name: Update cache
+          apt:
+            update_cache: yes
+            cache_valid_time: 6000
+          when: ansible_os_family == "Debian"
+
+        - name: Install packages CentOS
+          yum:
+            name: "{{ item }}"
+            state: present
+            update_cache: yes
+          notify:
+            - Start httpd
+            - Start MariaDB
+          loop: "{{ CentOS_packages }}"
+          when: ansible_os_family == 'RedHat'
+
+        - name: Install packages Ubuntu
+          apt:
+            name: "{{ item }}"
+            state: present
+          notify:
+            - Start Apache
+            - Start MySQL
+          loop: "{{ Ubuntu_packages }}"
+          when: ansible_os_family == 'Debian'
+
+        - name: Copy files
+          copy:
+            src: "{{ item }}"
+            dest: /var/www/html/
+            owner: root
+            group: root
+            mode: '0644'
+          loop: "{{ copy_files }}"
+
+        - name: Copy Apache virtual host configuration
+          template:
+            src: "{{ Jinja_temp }}"
+            dest: "{{ apache_conf_path }}/{{ server_name }}.conf"
+            owner: root
+            group: root
+            mode: '0644'
+          when: ansible_os_family == 'Debian'
+
+
+        - name: Copy httpd virtual host configuration
+          template:
+            src: "{{ Jinja_temp }}"
+            dest: "{{ httpd_conf_path }}/{{ server_name }}.conf"
+            owner: root
+            group: root
+            mode: '0644'
+          when: ansible_os_family == 'RedHat'
+
+
+      handlers:
+        - name: Start httpd
+          service:
+            name: httpd
+            state: started
+            enabled: true
+
+        - name: Start Apache
+          service:
+            name: apache2
+            state: started
+            enabled: true
+
+        - name: Start MariaDB
+          service:
+            name: mariadb
+            state: started
+            enabled: true
+
+        - name: Start MySQL
+          service:
+            name: mysql
+            state: started
+            enabled: true
